@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактор таблицы</title>
-    <!-- Подключение скрипта Telegram -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -22,14 +21,6 @@
             padding: 15px;
             color: var(--tg-theme-text-color);
             background-color: var(--tg-theme-bg-color);
-            transition: color 0.2s, background-color 0.2s;
-        }
-        h1 {
-            font-size: 20px;
-            margin-top: 0;
-        }
-        p {
-            color: var(--tg-theme-hint-color);
         }
         .table-container {
             width: 100%;
@@ -37,64 +28,32 @@
             border: 1px solid var(--tg-theme-border-color);
             border-radius: 8px;
             margin-bottom: 20px;
+            padding: 5px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid var(--tg-theme-border-color);
-        }
-        th {
-            font-weight: 600;
-            background-color: rgba(128, 128, 128, 0.05);
-        }
-        td input {
-            width: 95%;
-            padding: 8px;
-            border: 1px solid var(--tg-theme-border-color);
-            border-radius: 4px;
-            background-color: transparent;
-            color: var(--tg-theme-text-color);
-            font-size: 16px;
-        }
-        .main-button {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            width: calc(100% - 30px);
-            height: 48px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--tg-theme-border-color); }
+        th { font-weight: 600; }
+        td input { width: 95%; padding: 8px; border: 1px solid var(--tg-theme-border-color); border-radius: 4px; background-color: transparent; color: var(--tg-theme-text-color); font-size: 16px; }
+        .main-button { position: fixed; bottom: 15px; left: 15px; right: 15px; width: calc(100% - 30px); height: 48px; border: none; border-radius: 8px; background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); font-size: 16px; font-weight: 600; cursor: pointer; }
+        textarea { font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
-
     <h1>Редактор таблицы</h1>
-    <p>Проверьте и при необходимости исправьте распознанные данные. Затем нажмите "Сохранить".</p>
-
+    <p id="subtitle">Проверьте и при необходимости исправьте распознанные данные. Затем нажмите "Сохранить".</p>
     <div class="table-container" id="table-container">
-        <!-- Таблица будет сгенерирована здесь -->
+        <!-- Контент генерируется скриптом -->
     </div>
-
     <button class="main-button" id="save-button">Сохранить изменения</button>
 
     <script>
-        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        const saveButton = document.getElementById('save-button');
+        function renderTable(data) { /* ... код этой функции не изменился ... */ }
+        function safeBase64Decode(base64) { /* ... код этой функции не изменился ... */ }
 
+        // --- Код функций для краткости скрыт, он остался прежним ---
         function renderTable(data) {
             const container = document.getElementById('table-container');
             if (!data || !Array.isArray(data) || data.length === 0) {
@@ -102,7 +61,6 @@
                 return;
             }
             const table = document.createElement('table');
-            
             const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
             data[0].forEach(headerText => {
@@ -112,7 +70,6 @@
             });
             thead.appendChild(headerRow);
             table.appendChild(thead);
-
             const tbody = document.createElement('tbody');
             for (let i = 1; i < data.length; i++) {
                 const row = document.createElement('tr');
@@ -130,44 +87,36 @@
             container.innerHTML = '';
             container.appendChild(table);
         }
-
-        saveButton.addEventListener('click', () => {
+        document.getElementById('save-button').addEventListener('click', () => {
             const table = document.querySelector('table');
+            if (!table) return;
             const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
             const rows = Array.from(table.querySelectorAll('tbody tr'));
-            
             const editedData = [headers];
-            
             rows.forEach(row => {
                 const rowData = Array.from(row.querySelectorAll('input')).map(input => {
-                    const value = input.value.trim().replace(',', '.'); // Заменяем запятые на точки
+                    const value = input.value.trim().replace(',', '.');
                     if (value === '') return null;
                     return isNaN(Number(value)) ? value : Number(value);
                 });
                 editedData.push(rowData);
             });
-            
             tg.sendData(JSON.stringify(editedData));
             tg.close();
         });
-
-        // НОВАЯ, УЛУЧШЕННАЯ ФУНКЦИЯ ДЕКОДИРОВАНИЯ
         function safeBase64Decode(base64) {
             try {
-                // Эта функция корректно декодирует Base64 строку, которая была закодирована из UTF-8 строки.
                 const binaryString = atob(base64);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
                 }
                 return new TextDecoder('utf-8').decode(bytes);
-            } catch (e) {
-                console.error("Ошибка декодирования Base64:", e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
+        // --- КОНЕЦ СКРЫТОГО КОДА ---
 
-        // --- Основная логика ---
+        // --- ОСНОВНАЯ ЛОГИКА С ОТЛАДКОЙ ---
         try {
             const encodedData = window.location.hash.substring(1);
             if (encodedData) {
@@ -176,17 +125,53 @@
                     const tableData = JSON.parse(decodedJsonString);
                     renderTable(tableData);
                 } else {
-                    throw new Error("Не удалось декодировать данные.");
+                    throw new Error("Не удалось декодировать данные из Base64. Возможно, они повреждены.");
                 }
             } else {
-                document.getElementById('table-container').textContent = 'Ошибка: данные для отображения не найдены.';
+                throw new Error("Данные для отображения не найдены в URL (пустой хэш).");
             }
         } catch (e) {
             console.error("Ошибка при загрузке данных:", e);
-            document.getElementById('table-container').textContent = 'Произошла ошибка при загрузке данных. Попробуйте снова.';
-            tg.showAlert('Произошла ошибка при загрузке данных. Попробуйте снова.');
+            const encodedData = window.location.hash.substring(1);
+            
+            // Показываем подробную информацию об ошибке прямо на странице
+            document.getElementById('subtitle').style.display = 'none';
+            document.getElementById('save-button').style.display = 'none';
+            
+            const errorHtml = `
+                <p style="color: red;"><b>Произошла критическая ошибка.</b></p>
+                <p><b>Сообщение:</b> ${e.message}</p>
+                <p><b>Длина полученных данных:</b> ${encodedData.length} символов.</p>
+                <p><b>Начало полученных данных (первые 200 символов):</b></p>
+                <textarea rows="5" style="width: 95%;" readonly>${encodedData.substring(0, 200)}</textarea>
+            `;
+            document.getElementById('table-container').innerHTML = errorHtml;
+            tg.showAlert('Произошла ошибка при загрузке данных. Подробности на экране.');
         }
-
     </script>
 </body>
 </html>
+```
+
+### Шаг 2: Обновите файл на GitHub
+
+Пожалуйста, еще раз обновите файл `editor.html` в вашем репозитории на GitHub, используя код, который я предоставил выше.
+
+### Шаг 3: Очистите кэш Telegram (ОЧЕНЬ ВАЖНО)
+
+Перед новой проверкой обязательно нужно очистить кэш. Это заставит Telegram загрузить самую последнюю версию вашего веб-приложения.
+
+* **На телефоне (Android/iOS):**
+    1.  Зайдите в Telegram в "Настройки".
+    2.  Перейдите в "Данные и память".
+    3.  Выберите "Использование памяти".
+    4.  Нажмите **"Очистить кэш Telegram"**.
+
+### Шаг 4: Проверка
+
+1.  Подождите 2-3 минуты после обновления файла на GitHub.
+2.  Очистите кэш, как описано выше.
+3.  Перезапустите бота на компьютере.
+4.  Начните диалог с ботом (`/start`) и попробуйте снова отправить фото.
+
+Теперь, если ошибка повторится, вместо простого сообщения вы увидите на экране Mini App **подробную техническую информацию**. Пожалуйста, **сделайте скриншот этого нового экрана с ошибкой** и пришлите его мне. Он даст нам точный ответ, что именно идет не т
